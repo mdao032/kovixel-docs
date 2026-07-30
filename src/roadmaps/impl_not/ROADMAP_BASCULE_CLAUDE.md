@@ -275,9 +275,36 @@ génération, pour tous les plans.
   d'accueil) à la lumière du coût réel désormais chiffré — resserrer si le pire cas calculé (§3)
   dépasse ce que l'activité peut absorber sans conversion payante.
 
-### Sprint C-4 — Nettoyage infrastructure et marketing
+### Sprint C-4 — Nettoyage infrastructure et marketing — TERMINÉ 2026-07-30
 
 **Objectif :** retirer ce qui n'est plus utilisé, aligner la promesse produit sur la réalité.
+
+**Réalisé :**
+- Services `ollama`/`ollama-puller` retirés de `docker-compose.yml` et `docker-compose.infra.yml`
+  (services, `depends_on`, volume `ollama_data`) ; répertoire `docker/ollama/` supprimé.
+- Variables `OLLAMA_URL`/`OLLAMA_MODEL`/`OLLAMA_EMBEDDING_MODEL` retirées des deux `.env.example`
+  (kovixel/ et racine) et des configs Spring (`application.yml`, `application-dev.yml` —
+  y compris un second bloc `kovixel.ai.ollama`/`models` obsolète oublié au Sprint C-2 avec
+  d'anciens noms de propriété `anonymous/free/pro/enterprise` —, `application-prod.yml`).
+- `OllamaHealthChecker`/`OllamaProperties` (morts depuis le Sprint C-2, plus aucun consommateur)
+  et leur test supprimés.
+- Références Ollama obsolètes nettoyées dans une dizaine de javadocs/commentaires backend
+  (`DocumentIngestionService`, `QnaServiceImpl`, `AiProviderService`, `SummaryResponse`, `Summary`,
+  `SummaryPromptBuilder`, `SpringAiConfig`, `HealthStatusMetrics`, `OcrTextEnhancer`, `OcrStrategy`,
+  `GeminiService`) — cosmétique, aucun changement de comportement.
+- Frontend : entrée `ollama` retirée de `ai-engine-badge.component.ts` (badge partagé),
+  `summary.component.ts` (map de métadonnées moteur), `summary.model.ts` (type `engine`) et
+  `tools-config.ts` (texte marketing + mots-clés de recherche) ; règles CSS `.engine-badge-ollama`
+  mortes retirées de `styles.css` ; test Vitest correspondant mis à jour (`gemini` au lieu
+  d'`ollama`).
+- Aucune promesse marketing "100% local" trouvée sur la landing page (`trust-section.component.ts`
+  n'affirme qu'une conformité RGPD générique, déjà honnête) — condition de sortie déjà satisfaite,
+  pas de changement de copy nécessaire.
+- `DPIA_ANALYSE_IMPACT_VIE_PRIVEE.md` et `REGISTRE_TRAITEMENTS.md` mis à jour : la fiche
+  "Analyse IA des documents" reflète désormais Claude (génération) + OpenAI (embeddings RAG) comme
+  sous-traitants, base légale passée de "consentement explicite" (choix local/cloud) à "exécution
+  du contrat" (plus de mode local alternatif) ; le droit d'opposition basé sur `ProcessingMode.LOCAL`
+  a été marqué retiré (champ supprimé du code au Sprint C-2).
 
 **Tâches :**
 - Retirer les services `ollama`/`ollama-puller` de `docker-compose.yml` (et de

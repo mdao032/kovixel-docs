@@ -23,16 +23,16 @@ conservation, destinataires, mesures de sécurité. Dernière mise à jour : 202
 
 - **Finalité** : générer un résumé, répondre à des questions sur le contenu, extraire des données
   structurées, traduire un document.
-- **Base légale** : **consentement explicite** — l'utilisateur choisit le mode de traitement
-  (`ProcessingMode.LOCAL` par défaut vs cloud), le passage en mode cloud est un acte positif
-  horodaté (`processingModeConsentAt`).
+- **Base légale** : **exécution du contrat** — le traitement IA (via Claude/OpenAI) est intrinsèque
+  aux fonctionnalités souscrites (résumé, Q&A, extraction) ; plus de mode local alternatif depuis
+  le retrait d'Ollama (ROADMAP_BASCULE_CLAUDE.md Sprints C-1/C-2/C-4).
 - **Personnes concernées** : utilisateurs ayant activé le traitement IA cloud ; utilisateurs
   anonymes pour les fonctionnalités IA accessibles sans compte (quota IP limité).
 - **Données traitées** : contenu du document (texte extrait), question posée par l'utilisateur.
 - **Durée de conservation** : alignée sur celle du document source (fiche 1) ; l'historique de
   session Q&A suit le cycle de vie du document.
-- **Destinataires** : sous-traitant IA cloud (Anthropic/Claude) si mode cloud choisi ; aucun envoi
-  externe si mode local (Ollama, traitement sur l'infrastructure Kovixel).
+- **Destinataires** : sous-traitants IA cloud — Anthropic/Claude (génération) et OpenAI (embeddings
+  RAG). Plus de traitement local (Ollama retiré, ROADMAP_BASCULE_CLAUDE.md Sprints C-1/C-2/C-4).
 - **Transfert hors UE** : possible si sous-traitant cloud hors UE — un accord de sous-traitance
   (DPA) avec le fournisseur IA doit couvrir ce point (hors périmètre technique de ce registre).
 - **Mesures de sécurité** : opt-in explicite et réversible, aucune donnée envoyée à un tiers sans

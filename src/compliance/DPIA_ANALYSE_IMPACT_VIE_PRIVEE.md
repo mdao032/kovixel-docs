@@ -13,7 +13,7 @@ les réduire. Périmètre : traitements existants au 2026-07-25.
 | Fichiers uploadés | PDF, Word, images et leur contenu | Exécution du contrat (le service consiste à traiter ces fichiers) | `Document`, chiffrés AES-256-GCM (Sprint E-2) |
 | Titres de document | Nom du fichier tel que fourni par l'utilisateur | Exécution du contrat | Chiffré (Sprint E-4, `DocumentTitleConverter`) |
 | Secret TOTP (2FA) | Secret partagé pour authentification à deux facteurs | Consentement (fonctionnalité optionnelle) | Chiffré (Sprint E-4, ancré par utilisateur) |
-| Traitement IA des documents | Contenu envoyé à un fournisseur IA (Claude/Anthropic, Ollama local) pour résumé/Q&A/extraction | **Consentement explicite** — `processingModeConsentAt`/`processingMode` sur `User` : l'utilisateur choisit explicitement le mode de traitement (local vs cloud) | `User.processingMode`, services IA |
+| Traitement IA des documents | Contenu envoyé à un fournisseur IA cloud (Claude/Anthropic pour la génération, OpenAI pour les embeddings RAG — ROADMAP_BASCULE_CLAUDE.md, plus de traitement local Ollama depuis les Sprints C-1/C-2) pour résumé/Q&A/extraction | Exécution du contrat (le service consiste à traiter ces fichiers via IA cloud) | Services IA (`AiRoutingService`) |
 | Paiement | Référence d'abonnement Stripe (pas de numéro de carte — délégué à Stripe, PCI-DSS) | Exécution du contrat | Module paiement |
 | Anti-fraude / anti-bot | Empreinte navigateur (fingerprint), score de risque, adresse IP | **Intérêt légitime** (protection contre l'abus du service gratuit, fraude) | `com.kovixel.antibot` |
 | Journal d'authentification | Connexions, échecs, changements de mot de passe, sessions actives | **Intérêt légitime** / obligation légale (traçabilité sécurité) | `AuthEventService`, `RefreshTokenService` |
@@ -45,9 +45,10 @@ les réduire. Périmètre : traitements existants au 2026-07-25.
 - **Traçabilité des accès** : tout accès à un fichier (upload, téléchargement, aperçu, suppression)
   est journalisé avec horodatage et IP (Sprint E-6) — permet de répondre à une demande d'accès
   Art. 15 avec précision, et de détecter un accès anormal.
-- **Minimisation** : le traitement IA cloud est **opt-in explicite** (`processingModeConsentAt`) —
-  le mode par défaut est local (`ProcessingMode.LOCAL`), aucune donnée n'est envoyée à un tiers IA
-  sans consentement enregistré.
+- **Minimisation** : le traitement IA est nécessaire à l'exécution du contrat (le service consiste
+  à traiter les documents via IA) — depuis le retrait d'Ollama (ROADMAP_BASCULE_CLAUDE.md, Sprints
+  C-1/C-2), il n'existe plus de mode de traitement local ; toutes les requêtes IA transitent par
+  Claude (génération) ou OpenAI (embeddings RAG).
 
 ## 4. Droits des personnes concernées — procédures existantes
 
@@ -57,7 +58,7 @@ les réduire. Périmètre : traitements existants au 2026-07-25.
 | Droit à l'effacement (Art. 17) | Suppression de compte + crypto-shredding de tous les fichiers associés | Implémenté (`DocumentServiceImpl.deleteDocument()` révoque la clé avant suppression) |
 | Droit à la portabilité (Art. 20) | Export structuré des documents et métadonnées | Partiel — dépend du format d'export déjà construit côté Team Admin, à valider avec ce sprint |
 | Droit de rectification (Art. 16) | Modification du profil (email, nom) via l'UI | Existant (hors périmètre chiffrement) |
-| Droit d'opposition au traitement IA | Bascule `processingMode` vers `LOCAL` | Implémenté |
+| Droit d'opposition au traitement IA | Non applicable — le traitement IA est nécessaire à l'exécution du contrat (fonctionnalités de résumé/Q&A/extraction), pas de mode local alternatif depuis le retrait d'Ollama | Retiré (ROADMAP_BASCULE_CLAUDE.md Sprint C-4) |
 
 ## 5. Risques résiduels identifiés
 
@@ -66,7 +67,7 @@ les réduire. Périmètre : traitements existants au 2026-07-25.
 | Compromission de la Master Key de chiffrement | Faible | Élevé (accès à tous les eDEK, mais pas aux fichiers sans accès simultané au stockage — ADR-001) | Rotation documentée (`KEY_ROTATION.md`), procédure d'incident (PSSI §5) | Rotation encore manuelle, pas automatique sur échéance |
 | Titre de document ou secret TOTP indéchiffrable après une rotation de MK mal séquencée | Moyenne (si rotation effectuée) | Moyen (perte d'accès, pas fuite) | `rotation-status` expose `totpOutdatedVersionCount` | Aucun job de re-chiffrement automatique des titres (dette documentée, Sprint E-4) |
 | Terminaison TLS et connexions PostgreSQL/Redis non chiffrées en interne | Faible (réseau Docker interne) | Moyen si le réseau interne est compromis | Authentification Redis, réseau Docker isolé | Certificats TLS PostgreSQL/Redis non provisionnés (Sprint E-7, `INFRASTRUCTURE_HARDENING.md`) |
-| Traitement IA cloud (fuite vers un sous-traitant tiers) | Faible | Moyen | Opt-in explicite, mode local par défaut | Contrat de sous-traitance (DPA) avec Anthropic à formaliser hors de ce document technique |
+| Traitement IA cloud (fuite vers un sous-traitant tiers) | Faible | Moyen | Chiffrement en transit (TLS), aucune donnée persistée côté fournisseur au-delà du traitement | Contrats de sous-traitance (DPA) avec Anthropic et OpenAI à formaliser hors de ce document technique |
 
 ## 6. Conclusion
 
