@@ -38,6 +38,17 @@ if ! id "$DEPLOY_USER" &>/dev/null; then
   usermod -aG sudo "$DEPLOY_USER"
 fi
 
+# --disabled-password ci-dessus signifie qu'aucun mot de passe n'existe pour cet
+# utilisateur (authentification SSH par clé uniquement, cohérent avec le reste de ce
+# script) — sudo ne peut donc PAS lui demander "son" mot de passe, il n'y en a pas.
+# Sans NOPASSWD, `sudo` reste bloqué indéfiniment sur un prompt qu'aucun mot de passe
+# ne peut jamais satisfaire. Accès sudo total sans mot de passe, cohérent avec le
+# modèle "authentification par clé SSH uniquement" déjà appliqué ci-dessus.
+echo "==> Sudo sans mot de passe pour '${DEPLOY_USER}' (cohérent avec l'auth par clé SSH)"
+echo "${DEPLOY_USER} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${DEPLOY_USER}"
+chmod 440 "/etc/sudoers.d/${DEPLOY_USER}"
+visudo -c -f "/etc/sudoers.d/${DEPLOY_USER}"
+
 echo "==> Installation de la clé SSH publique pour ${DEPLOY_USER}"
 DEPLOY_HOME="/home/${DEPLOY_USER}"
 install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "${DEPLOY_HOME}/.ssh"
