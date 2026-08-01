@@ -114,15 +114,22 @@ bash ~/kovixel-app/scripts/health-check.sh https://staging.kovixel.com
 ```
 
 Puis manuellement : inscription, login (email + OAuth), upload PDF, résumé IA,
-Q&A — et un œil sur Grafana (`http://<ip-vps>:3001`, **à restreindre** — voir
-note ci-dessous) pour confirmer que les métriques remontent.
+Q&A — et un œil sur Grafana pour confirmer que les métriques remontent (accès
+via tunnel SSH, voir ci-dessous).
 
-> ⚠️ Grafana (port 3001) et Prometheus (port 9090) sont publiés sur l'hôte par
-> `docker-compose.yml` mais ne sont protégés que par leur propre auth (Grafana) ou
-> rien du tout (Prometheus). En staging, restreins l'accès via UFW à ton IP
-> (`sudo ufw allow from <ton-ip> to any port 3001,9090 proto tcp`) plutôt que de
-> les laisser ouverts à tout Internet — surtout pour Prometheus qui n'a aucune
-> authentification.
+> ℹ️ Postgres, Redis, MinIO, Gotenberg, Prometheus, node-exporter et Grafana sont
+> tous liés à `127.0.0.1` dans `docker-compose.yml` — **pas** exposés à Internet,
+> uniquement `kovixel-ui` (port 80/443) l'est. C'est volontaire : `ufw allow`
+> seul ne suffit pas à protéger un port publié par Docker (Docker manipule
+> iptables directement et court-circuite les règles UFW — piège classique), donc
+> ces services n'ont jamais eu de port ouvert publiquement en premier lieu.
+> Pour y accéder depuis ta machine (Grafana, console MinIO, psql direct…), ouvre
+> un tunnel SSH :
+> ```bash
+> ssh -L 3001:localhost:3001 -L 9090:localhost:9090 -L 9001:localhost:9001 deploy@<ip-vps>
+> ```
+> puis ouvre `http://localhost:3001` (Grafana), `http://localhost:9090` (Prometheus)
+> ou `http://localhost:9001` (console MinIO) normalement dans ton navigateur.
 
 ## Redéploiement (mise à jour du code)
 

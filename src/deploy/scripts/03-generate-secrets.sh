@@ -58,6 +58,7 @@ set_env() {
 }
 
 echo "==> Génération des secrets forts"
+set_env DB_PASSWORD                      "$(gen_hex32)"
 set_env JWT_SECRET                       "$(gen_hex32)"
 set_env ENCRYPTION_MASTER_KEY             "$(gen_hex32)"
 set_env REDIS_PASSWORD                   "$(gen_hex32)"

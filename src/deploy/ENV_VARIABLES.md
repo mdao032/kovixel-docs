@@ -17,6 +17,7 @@
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Génération IA (résumé, Q&A, extraction, traduction) | console.anthropic.com |
 | `OPENAI_API_KEY` | Embeddings RAG (`text-embedding-3-small`) — chat désactivé | platform.openai.com |
+| `DB_PASSWORD` | Mot de passe PostgreSQL | `openssl rand -hex 32` |
 | `JWT_SECRET` | Signature HMAC-256 des JWT | `openssl rand -hex 32` |
 | `ENCRYPTION_MASTER_KEY` | Chiffrement des fichiers/titres/secrets TOTP au repos | `openssl rand -hex 32` — **ne jamais régénérer une fois des données réelles chiffrées** |
 | `REDIS_PASSWORD` | Auth Redis (cache IA, quotas, blacklist tokens, PKCS#12 e-signature) | `openssl rand -hex 32` |

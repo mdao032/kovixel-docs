@@ -59,12 +59,13 @@ statuer sur ce point : soit brancher un canal de notification, soit assumer
 consciemment une supervision "pull" (quelqu'un doit consulter Grafana
 activement, ça ne va pas chercher personne).
 
-### 4. Restriction des ports d'observabilité
+### 4. Ports internes déjà non exposés — rien à faire de plus
 
-Contrairement au staging où une règle UFW ciblée sur ton IP suffit (usage
-occasionnel), en prod : soit la même restriction stricte, soit un tunnel SSH
-(`ssh -L 3001:localhost:3001 deploy@<ip-vps>`) pour ne jamais exposer
-Grafana/Prometheus publiquement, même temporairement.
+Postgres, Redis, MinIO, Gotenberg, Prometheus, node-exporter et Grafana sont liés
+à `127.0.0.1` dans `docker-compose.yml` (identique staging/prod) — accès admin
+uniquement via tunnel SSH (`ssh -L 3001:localhost:3001 deploy@<ip-vps>`), jamais
+une exposition publique, y compris temporaire. Rien de spécifique à la prod ici,
+juste à ne pas régresser en modifiant `docker-compose.yml` sans y repenser.
 
 ### 5. Rotation du Master Key de chiffrement
 

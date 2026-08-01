@@ -37,7 +37,9 @@
 
 ## Sécurité / conformité
 
-- [ ] Grafana/Prometheus non exposés publiquement (UFW restreint ou tunnel SSH).
+- [ ] Grafana/Prometheus/MinIO/Postgres/Redis/Gotenberg non exposés publiquement
+      (`docker compose config | grep -A1 host_ip` doit montrer `127.0.0.1` pour
+      tous sauf `kovixel-ui`) — accès admin uniquement via tunnel SSH.
 - [ ] `PLATFORM_ADMIN_ALLOWED_EMAILS` renseigné si la console Super Admin est utilisée.
 - [ ] `PSSI_POLITIQUE_SECURITE_DONNEES.md` / DPIA / registre des traitements à jour
       avec l'environnement de prod réel (sous-traitants IA, hébergeur — cf.
