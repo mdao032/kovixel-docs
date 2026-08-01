@@ -1,0 +1,1260 @@
+# KOVIXEL-UI — Prompts Agent IA Claude
+# Thème uniforme · Toggle Dark/Light · Audit complet
+# Angular 21 SSR · Tailwind v3 · Signals
+# Exécuter dans l'ordre, un prompt à la fois
+
+---
+
+## CONTEXTE À COLLER EN DÉBUT DE CHAQUE SESSION
+
+```
+Projet : kovixel-ui — Angular 21 standalone + SSR, Tailwind CSS v3, lucide-angular, ngx-toastr
+Thème actuel : dark sombre violet (#8b5cf6 primary), design tokens dans src/styles.css
+Problème connu : le /dashboard a un thème clair incohérent avec le reste
+Structure : core/(guards|interceptors|layouts|services) · features/* · shared/
+Layouts : app-shell (sidebar+topbar, pages connectées) · auth-layout (pages auth)
+Lis TOUJOURS le fichier concerné avant d'écrire quoi que ce soit.
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 1 — AUDIT COMPLET AVANT TOUTE MODIFICATION
+## ════════════════════════════════════════════════════════
+
+### PROMPT 1.1 — Audit thème & incohérences
+
+```
+Lis en entier ces fichiers dans kovixel-ui, dans cet ordre :
+1. src/styles.css
+2. tailwind.config.js
+3. src/app/core/layouts/app-shell/ (tous les fichiers)
+4. src/app/core/layouts/auth-layout/ (tous les fichiers)
+5. src/app/features/dashboard/ (tous les fichiers)
+6. src/app/features/auth/ (tous les fichiers)
+7. src/app/features/settings/ (tous les fichiers)
+
+Après lecture, produis un rapport structuré sous ce format exact :
+
+─── THÈME ───────────────────────────────────────────
+A. Variables CSS définies dans styles.css (liste complète)
+B. Mode dark Tailwind configuré ? (darkMode: 'class' ?)
+C. Classes hardcodées en blanc/clair trouvées dans chaque feature
+   Format : [fichier] → [ligne] → [classe problématique]
+
+─── INCOHÉRENCES UI ─────────────────────────────────
+D. Composants qui utilisent des couleurs hardcodées (bg-white, 
+   text-gray-*, bg-gray-*) au lieu des variables CSS
+E. Tailles de police/spacing incohérents entre les pages
+F. Boutons sans état hover/focus/disabled cohérent
+G. Cards avec styles différents selon les pages
+H. Icônes Lucide manquantes ou mal dimensionnées
+
+─── ÉLÉMENTS MANQUANTS ──────────────────────────────
+I. Pages sans état de chargement (loading skeleton)
+J. Pages sans état vide (empty state)
+K. Pages sans état d'erreur
+L. Formulaires sans validation visuelle
+M. Manque de feedback utilisateur (toasts manquants)
+N. Accessibilité : aria-label manquants sur les boutons icon-only
+
+─── ÉVALUATION THÈME CLAIR ──────────────────────────
+O. Complexité estimée pour implémenter un toggle dark/light
+P. Fichiers à modifier (liste)
+Q. Risques identifiés
+
+NE modifie rien. Rapport uniquement.
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 2 — SYSTÈME DE THÈME (FONDATION)
+## ════════════════════════════════════════════════════════
+
+### PROMPT 2.1 — Design tokens dual-theme dans styles.css
+
+```
+Lis d'abord src/styles.css et tailwind.config.js en entier.
+
+Refactorise le système de design tokens pour supporter deux thèmes
+avec l'effet "wow" dans les deux cas.
+
+═══ 1. TAILWIND CONFIG ═══
+
+Dans tailwind.config.js, ajoute :
+  darkMode: 'class'
+(si pas encore présent — vérifie avant)
+
+═══ 2. STYLES.CSS — REMPLACEMENT COMPLET DES TOKENS ═══
+
+Remplace/complète les variables CSS existantes par ce système
+(conserve tout ce qui existe déjà, adapte les valeurs si nécessaire) :
+
+:root {
+  /* ── Mode sombre (défaut) ── */
+  /* Surfaces */
+  --bg-base:        #030014;
+  --bg-surface:     #0d0b14;
+  --bg-elevated:    #131020;
+  --bg-card:        #1a1528;
+  --bg-card-hover:  #221c35;
+
+  /* Borders */
+  --border:         rgba(124, 58, 237, 0.18);
+  --border-hover:   rgba(139, 92, 246, 0.40);
+  --border-strong:  rgba(167, 139, 250, 0.55);
+
+  /* Textes */
+  --text-primary:   #f1eeff;
+  --text-secondary: #a89cc8;
+  --text-muted:     #6b5f8a;
+  --text-disabled:  #3d3558;
+
+  /* Violet (identique dans les deux thèmes) */
+  --color-primary:        #8b5cf6;
+  --color-primary-dark:   #7c3aed;
+  --color-primary-light:  #a78bfa;
+  --color-primary-glow:   rgba(139, 92, 246, 0.35);
+  --color-primary-subtle: rgba(124, 58, 237, 0.12);
+
+  /* Sémantiques */
+  --color-success:  #22c55e;
+  --color-warning:  #f59e0b;
+  --color-error:    #ef4444;
+  --color-info:     #3b82f6;
+
+  /* Glassmorphism dark */
+  --glass-bg:      rgba(19, 16, 32, 0.75);
+  --glass-border:  rgba(124, 58, 237, 0.20);
+
+  /* Mesh gradient dark */
+  --mesh-gradient:
+    radial-gradient(ellipse 80% 60% at 50% -10%,
+      rgba(109, 40, 217, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 80%,
+      rgba(124, 58, 237, 0.14) 0%, transparent 60%),
+    #030014;
+
+  /* Ombres */
+  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-violet: 0 0 30px rgba(139, 92, 246, 0.30);
+  --shadow-glow:   0 0 60px rgba(139, 92, 246, 0.40);
+}
+
+/* ══ THÈME CLAIR ══════════════════════════════════════════════
+   Principe : violet doux sur fond ivoire/ardoise clair.
+   Pas du blanc banal — un "Light Violet Premium".
+   L'effet wow vient des ombres colorées et du violet en accent.
+═══════════════════════════════════════════════════════════════ */
+.light {
+  /* Surfaces */
+  --bg-base:        #faf9ff;
+  --bg-surface:     #f3f0ff;
+  --bg-elevated:    #ede9fe;
+  --bg-card:        #ffffff;
+  --bg-card-hover:  #f5f3ff;
+
+  /* Borders */
+  --border:         rgba(124, 58, 237, 0.15);
+  --border-hover:   rgba(124, 58, 237, 0.35);
+  --border-strong:  rgba(109, 40, 217, 0.50);
+
+  /* Textes */
+  --text-primary:   #1e1535;
+  --text-secondary: #4c3d72;
+  --text-muted:     #7c6fa0;
+  --text-disabled:  #c4b8e0;
+
+  /* Glassmorphism light */
+  --glass-bg:      rgba(255, 255, 255, 0.75);
+  --glass-border:  rgba(124, 58, 237, 0.18);
+
+  /* Mesh gradient light */
+  --mesh-gradient:
+    radial-gradient(ellipse 80% 60% at 50% -10%,
+      rgba(167, 139, 250, 0.20) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 80%,
+      rgba(196, 181, 253, 0.15) 0%, transparent 60%),
+    #faf9ff;
+
+  /* Ombres */
+  --shadow-card:   0 4px 24px rgba(109, 40, 217, 0.10);
+  --shadow-violet: 0 0 30px rgba(139, 92, 246, 0.20);
+  --shadow-glow:   0 0 60px rgba(139, 92, 246, 0.25);
+}
+
+═══ 3. CLASSES UTILITAIRES dans styles.css ═══
+
+Ajoute/remplace les classes utilitaires pour qu'elles utilisent
+les variables (plus aucune couleur hardcodée) :
+
+.card-base {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.card-base:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-violet);
+  transform: translateY(-2px);
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  color: #ffffff;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  box-shadow: var(--shadow-violet);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-ghost:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  background: var(--color-primary-subtle);
+}
+
+.input-base {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-base:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  outline: none;
+}
+.input-base::placeholder { color: var(--text-muted); }
+
+.text-gradient-violet {
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6, #6d28d9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mesh-bg { background: var(--mesh-gradient); }
+
+═══ 4. TRANSITION GLOBALE ═══
+
+Dans body (ou html) dans styles.css, ajoute :
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+Cela donne une transition fluide au changement de thème.
+
+Conserve toutes les autres règles existantes dans styles.css.
+Ne supprime rien sans avoir vérifié que c'est réellement inutile.
+```
+
+---
+
+### PROMPT 2.2 — ThemeService Angular (Signals)
+
+```
+Lis d'abord src/app/core/services/auth.service.ts pour comprendre
+le pattern Signals utilisé dans le projet, puis applique le même.
+
+Crée src/app/core/services/theme.service.ts :
+
+import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+
+export type Theme = 'dark' | 'light';
+
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private platformId = inject(PLATFORM_ID);
+
+  // Signal source de vérité
+  private _theme = signal<Theme>(this.#loadInitialTheme());
+
+  // Signal public readonly
+  readonly theme = this._theme.asReadonly();
+  readonly isDark  = () => this._theme() === 'dark';
+  readonly isLight = () => this._theme() === 'light';
+
+  constructor() {
+    // Effect : applique le thème au DOM à chaque changement
+    effect(() => {
+      if (!isPlatformBrowser(this.platformId)) return;
+      const t = this._theme();
+      const root = document.documentElement;
+      root.classList.remove('dark', 'light');
+      root.classList.add(t);
+      localStorage.setItem('kovixel-theme', t);
+    });
+  }
+
+  toggle(): void {
+    this._theme.update(t => t === 'dark' ? 'light' : 'dark');
+  }
+
+  setTheme(theme: Theme): void {
+    this._theme.set(theme);
+  }
+
+  #loadInitialTheme(): Theme {
+    if (!isPlatformBrowser(this.platformId)) return 'dark';
+    const saved = localStorage.getItem('kovixel-theme') as Theme | null;
+    if (saved === 'dark' || saved === 'light') return saved;
+    // Respecte la préférence système si pas de préférence sauvegardée
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark' : 'light';
+  }
+}
+
+IMPORTANT SSR :
+Ajoute aussi dans src/index.html, dans le <head>, AVANT tout script :
+
+<script>
+  // Applique le thème immédiatement (évite le flash FOUC)
+  (function() {
+    try {
+      var t = localStorage.getItem('kovixel-theme');
+      if (!t) {
+        t = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark' : 'light';
+      }
+      document.documentElement.classList.add(t);
+    } catch(e) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
+
+Ce script inline évite le flash blanc/clair au chargement (FOUC).
+```
+
+---
+
+### PROMPT 2.3 — Toggle thème dans la Topbar (app-shell)
+
+```
+Lis d'abord src/app/core/layouts/app-shell/ (tous les fichiers du composant).
+
+Dans le composant Topbar (ou app-shell si tout est intégré) :
+
+1. Injecte ThemeService :
+   private theme = inject(ThemeService);
+
+2. Ajoute le bouton toggle DANS la navbar/topbar existante,
+   à droite (près du profil ou des notifications).
+   
+   Ne crée pas un nouveau composant — ajoute directement dans le template
+   de la topbar existante.
+
+3. Template du bouton (adapte le style au template existant) :
+
+   <button
+     (click)="theme.toggle()"
+     [attr.aria-label]="theme.isDark() ? 'Passer en mode clair' : 'Passer en mode sombre'"
+     class="h-9 w-9 rounded-lg flex items-center justify-center
+            border border-[var(--border)] bg-[var(--bg-card)]
+            text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+            hover:border-[var(--border-hover)] hover:bg-[var(--color-primary-subtle)]
+            transition-all duration-200">
+     <!-- Lune si dark, Soleil si light — avec lucide-angular -->
+     @if (theme.isDark()) {
+       <lucide-icon name="sun" [size]="16" />
+     } @else {
+       <lucide-icon name="moon" [size]="16" />
+     }
+   </button>
+
+4. Ajoute une micro-animation de rotation sur l'icône au changement :
+   Dans styles.css ou le fichier de styles du composant :
+   .theme-toggle-icon {
+     transition: transform 0.4s ease, opacity 0.2s;
+   }
+   .theme-toggle-icon:active { transform: rotate(180deg); }
+
+5. Tooltip au hover (via @angular/cdk Overlay ou simple title) :
+   "Mode clair" / "Mode sombre"
+
+NE touche à aucun autre élément de la topbar.
+Vérifie que le bouton est visible en dark ET en light après modification.
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 3 — UNIFORMISATION DARK THEME (FIX URGENT)
+## ════════════════════════════════════════════════════════
+
+### PROMPT 3.1 — Fix dashboard (thème clair → dark uniforme)
+
+```
+Lis EN ENTIER src/app/features/dashboard/ (tous les fichiers .ts et .html).
+
+OBJECTIF : Faire en sorte que /dashboard utilise exactement le même
+dark theme que le reste de l'application.
+
+RÈGLE : toute couleur hardcodée doit devenir une variable CSS.
+Tableau de correspondance — remplace partout :
+
+HARDCODÉ                        → VARIABLE CSS
+────────────────────────────────────────────────
+bg-white                        → bg-[var(--bg-card)]
+bg-gray-50, bg-gray-100         → bg-[var(--bg-surface)]
+bg-gray-800, bg-gray-900        → bg-[var(--bg-base)]
+text-gray-900, text-black       → text-[var(--text-primary)]
+text-gray-600, text-gray-700    → text-[var(--text-secondary)]
+text-gray-400, text-gray-500    → text-[var(--text-muted)]
+border-gray-200, border-gray-300 → border-[var(--border)]
+shadow (toutes)                 → shadow-[var(--shadow-card)]
+bg-violet-* (hardcodé)          → bg-[var(--color-primary)] ou variante
+
+ÉGALEMENT :
+- Si des éléments utilisent `class="..."` inline sans variable → migrer
+- Si le layout parent injecte un bg-white quelque part → corriger
+
+Après les remplacements, ajoute le mesh gradient violet sur le fond
+de la page dashboard (comme les autres pages) :
+  Sur le conteneur principal de la page dashboard, ajoute :
+  class="... mesh-bg"
+  ou directement : style="background: var(--mesh-gradient)"
+
+Montre-moi le diff avant/après pour chaque fichier modifié.
+```
+
+---
+
+### PROMPT 3.2 — Uniformisation de TOUTES les features
+
+```
+Lis TOUS les fichiers HTML de ces features dans src/app/features/ :
+documents/, summary/, qna/, extraction/, conversion/, jobs/, 
+subscription/, settings/, shared/pages/
+
+Pour chacun, applique exactement le même tableau de remplacement
+que dans le prompt précédent :
+
+bg-white → bg-[var(--bg-card)]
+bg-gray-* → bg-[var(--bg-surface)] ou bg-[var(--bg-base)]
+text-gray-900 → text-[var(--text-primary)]
+text-gray-600 → text-[var(--text-secondary)]
+text-gray-400 → text-[var(--text-muted)]
+border-gray-* → border-[var(--border)]
+
+ÉGALEMENT, uniformise ces patterns dans TOUS les fichiers :
+
+Cards :
+  Remplace toute combinaison (bg-white/bg-gray + rounded + shadow + border)
+  par la classe utilitaire .card-base définie dans styles.css
+
+Boutons primaires :
+  Remplace toute combinaison violet hardcodée par .btn-primary
+
+Boutons secondaires :
+  Remplace par .btn-ghost
+
+Inputs :
+  Remplace par .input-base
+
+Fais les changements feature par feature, montre le diff pour chacune.
+Ne modifie PAS la logique TypeScript — uniquement les templates HTML
+et les classes CSS.
+```
+
+---
+
+### PROMPT 3.3 — Fix auth-layout en dual-theme
+
+```
+Lis src/app/core/layouts/auth-layout/ en entier.
+
+Le layout auth a "Fond violet + carte blanche centrée".
+En dark mode : fond sombre violet (déjà correct probablement).
+En light mode : fond violet très doux + carte blanche avec ombre violet.
+
+Modifie le layout auth pour que les deux thèmes soient premium :
+
+DARK (classe .dark sur html) :
+- Fond : var(--mesh-gradient) — sombre avec lueur violet
+- Carte : bg-[var(--bg-card)] border border-[var(--border)]
+- Logo : text-gradient-violet
+
+LIGHT (classe .light sur html) :
+- Fond : radial-gradient subtil violet clair sur fond ivoire
+  background: radial-gradient(ellipse 70% 50% at 50% 0%,
+    rgba(196, 181, 253, 0.35) 0%, transparent 60%), var(--bg-base);
+- Carte : bg-white shadow-[0_8px_40px_rgba(109,40,217,0.12)]
+         border border-[var(--border)]
+- Logo : text-gradient-violet (identique — la marque reste violette)
+
+Vérifie que les formulaires login et register sont bien lisibles
+dans les deux thèmes (contraste suffisant sur les labels et placeholders).
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 4 — THÈME CLAIR PREMIUM COMPLET
+## ════════════════════════════════════════════════════════
+
+### PROMPT 4.1 — App-shell adapté aux deux thèmes
+
+```
+Lis src/app/core/layouts/app-shell/ en entier (sidebar + topbar).
+
+Adapte le sidebar et la topbar pour fonctionner parfaitement
+dans les deux thèmes. Utilise UNIQUEMENT les variables CSS.
+
+SIDEBAR — éléments à adapter :
+  Fond sidebar : bg-[var(--bg-surface)]
+  Border droite : border-[var(--border)]
+  Logo : toujours text-gradient-violet (invariant)
+  Items nav inactifs : color: var(--text-secondary)
+  Items nav actifs : bg-[var(--color-primary-subtle)]
+                     border: var(--border-hover)
+                     color: var(--color-primary-light)
+  Items nav hover : bg-[var(--color-primary-subtle)] transition
+  Section "Plan" user : bg-[var(--bg-elevated)] border var(--border)
+  Texte nom user : var(--text-primary)
+  Texte email : var(--text-muted)
+
+TOPBAR — éléments à adapter :
+  Fond : bg-[var(--bg-surface)] backdrop-blur (glassmorphism)
+  Border bas : border-[var(--border)]
+  Icônes actions : var(--text-secondary) → var(--text-primary) au hover
+  Input recherche : .input-base (déjà défini)
+  Badge notifications : bg-[var(--color-primary)]
+
+Résultat attendu :
+  Dark : sidebar sombre violet, textes clairs
+  Light : sidebar ivoire violet doux, textes sombres
+  → Transition fluide entre les deux (0.3s ease déjà sur body)
+```
+
+---
+
+### PROMPT 4.2 — Radio button thème dans /settings
+
+```
+Lis src/app/features/settings/ en entier.
+
+Dans la page settings, ajoute une section "Apparence" avec
+un sélecteur de thème visuel (pas juste un radio text).
+
+SECTION À AJOUTER dans le template settings (adapte à la structure existante) :
+
+<section class="card-base p-6">
+  <h2>Apparence</h2>
+  <p class="text-[var(--text-muted)] text-sm mb-6">
+    Choisissez l'apparence de votre espace Kovixel.
+  </p>
+
+  <div class="grid grid-cols-2 gap-4 max-w-sm">
+
+    <!-- Option Dark -->
+    <button
+      (click)="setTheme('dark')"
+      [class.ring-2]="theme.isDark()"
+      [class.ring-violet-500]="theme.isDark()"
+      class="group relative rounded-xl border border-[var(--border)]
+             overflow-hidden transition-all hover:border-[var(--border-hover)]">
+      <!-- Preview miniature dark -->
+      <div class="h-20 bg-[#030014] p-2 flex gap-1">
+        <div class="w-8 rounded bg-[#1a1528]"></div>
+        <div class="flex-1 space-y-1">
+          <div class="h-2 w-3/4 rounded bg-[#2d2445]"></div>
+          <div class="h-2 w-1/2 rounded bg-[#8b5cf6] opacity-60"></div>
+        </div>
+      </div>
+      <!-- Label -->
+      <div class="p-3 bg-[var(--bg-card)] border-t border-[var(--border)]
+                  flex items-center justify-between">
+        <span class="text-sm font-medium text-[var(--text-primary)]">Sombre</span>
+        @if (theme.isDark()) {
+          <lucide-icon name="check-circle" [size]="16"
+            class="text-violet-500" />
+        }
+      </div>
+    </button>
+
+    <!-- Option Light -->
+    <button
+      (click)="setTheme('light')"
+      [class.ring-2]="theme.isLight()"
+      [class.ring-violet-500]="theme.isLight()"
+      class="group relative rounded-xl border border-[var(--border)]
+             overflow-hidden transition-all hover:border-[var(--border-hover)]">
+      <!-- Preview miniature light -->
+      <div class="h-20 bg-[#faf9ff] p-2 flex gap-1">
+        <div class="w-8 rounded bg-[#ede9fe]"></div>
+        <div class="flex-1 space-y-1">
+          <div class="h-2 w-3/4 rounded bg-[#ddd6fe]"></div>
+          <div class="h-2 w-1/2 rounded bg-[#8b5cf6] opacity-60"></div>
+        </div>
+      </div>
+      <!-- Label -->
+      <div class="p-3 bg-white border-t border-violet-100
+                  flex items-center justify-between">
+        <span class="text-sm font-medium text-[#1e1535]">Clair</span>
+        @if (theme.isLight()) {
+          <lucide-icon name="check-circle" [size]="16"
+            class="text-violet-500" />
+        }
+      </div>
+    </button>
+
+  </div>
+
+  <p class="text-xs text-[var(--text-muted)] mt-4">
+    Votre préférence est sauvegardée automatiquement.
+  </p>
+</section>
+
+Dans le composant TypeScript de settings, injecte ThemeService :
+  protected theme = inject(ThemeService);
+  setTheme = (t: Theme) => this.theme.setTheme(t);
+
+Respecte exactement le style et la structure Angular standalone existants.
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 5 — AUDIT & CORRECTIONS UI/UX
+## ════════════════════════════════════════════════════════
+
+### PROMPT 5.1 — États manquants : loading, empty, error
+
+```
+Lis tous les fichiers dans src/app/features/ 
+(dashboard, documents, summary, qna, extraction, conversion, jobs).
+
+Pour chaque feature, identifie si ces 3 états existent dans le template.
+Si un état manque, implémente-le.
+
+════ PATTERN LOADING (skeleton) ════
+Utilise des divs animées avec cette classe à définir dans styles.css :
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-card-hover) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+Exemple pour une liste de documents :
+@if (isLoading) {
+  <div class="space-y-3">
+    @for (i of [1,2,3,4,5]; track i) {
+      <div class="skeleton h-16 w-full"></div>
+    }
+  </div>
+}
+
+════ PATTERN EMPTY STATE ════
+Exemple vide pour /documents :
+@if (!isLoading && documents.length === 0) {
+  <div class="flex flex-col items-center justify-center py-20 gap-4 text-center">
+    <div class="h-16 w-16 rounded-2xl bg-[var(--color-primary-subtle)]
+                border border-[var(--border)] flex items-center justify-center">
+      <lucide-icon name="file-text" [size]="28"
+        class="text-[var(--color-primary-light)]" />
+    </div>
+    <h3 class="font-semibold text-[var(--text-primary)]">Aucun document</h3>
+    <p class="text-sm text-[var(--text-muted)] max-w-xs">
+      Importez votre premier PDF pour commencer.
+    </p>
+    <a routerLink="/conversion" class="btn-primary text-sm">
+      <lucide-icon name="upload" [size]="14" />
+      Importer un fichier
+    </a>
+  </div>
+}
+
+════ PATTERN ERROR STATE ════
+@if (hasError) {
+  <div class="card-base p-8 flex flex-col items-center gap-4 text-center">
+    <div class="h-12 w-12 rounded-xl bg-red-500/10 border border-red-500/20
+                flex items-center justify-center">
+      <lucide-icon name="alert-circle" [size]="24" class="text-red-400" />
+    </div>
+    <h3 class="font-semibold text-[var(--text-primary)]">Une erreur est survenue</h3>
+    <p class="text-sm text-[var(--text-muted)]">{{ errorMessage }}</p>
+    <button (click)="retry()" class="btn-ghost text-sm">
+      <lucide-icon name="refresh-cw" [size]="14" />
+      Réessayer
+    </button>
+  </div>
+}
+
+Applique ces 3 patterns partout où ils manquent.
+Adapte le texte au contexte de chaque feature.
+```
+
+---
+
+### PROMPT 5.2 — Cohérence typographique et spacing
+
+```
+Lis src/styles.css et TOUS les templates HTML des features.
+
+Applique ces règles de typographie uniformes à toute l'application :
+
+HIÉRARCHIE TEXTE (remplace les classes incohérentes) :
+  Titre de page (h1)  : text-2xl font-bold text-[var(--text-primary)] tracking-tight
+  Titre de section    : text-lg font-semibold text-[var(--text-primary)]
+  Titre de card       : text-base font-semibold text-[var(--text-primary)]
+  Texte principal     : text-sm text-[var(--text-secondary)] leading-relaxed
+  Texte secondaire    : text-xs text-[var(--text-muted)]
+  Label de form       : text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]
+
+SPACING ENTRE SECTIONS : toujours space-y-6 ou gap-6
+SPACING INTERNE CARDS  : toujours p-5 ou p-6
+BORDER RADIUS CARDS    : toujours rounded-2xl (16px)
+BORDER RADIUS INPUTS   : toujours rounded-xl (12px — via .input-base)
+BORDER RADIUS BOUTONS  : toujours rounded-xl (via .btn-primary / .btn-ghost)
+
+Corrige les incohérences trouvées dans chaque fichier.
+Liste les fichiers modifiés et les changements effectués.
+```
+
+---
+
+### PROMPT 5.3 — Badges, pills et indicateurs de statut
+
+```
+Lis tous les templates HTML des features.
+
+Identifie tous les badges, pills, tags et indicateurs de statut
+dans l'application. Uniformise-les avec ce système :
+
+Dans styles.css, ajoute ces classes de badge si elles n'existent pas :
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.badge-violet  { background: rgba(124,58,237,0.18); color: #c4b5fd;
+                  border: 1px solid rgba(124,58,237,0.35); }
+.badge-green   { background: rgba(34,197,94,0.12);  color: #86efac;
+                  border: 1px solid rgba(34,197,94,0.30); }
+.badge-amber   { background: rgba(245,158,11,0.12); color: #fcd34d;
+                  border: 1px solid rgba(245,158,11,0.30); }
+.badge-red     { background: rgba(239,68,68,0.12);  color: #fca5a5;
+                  border: 1px solid rgba(239,68,68,0.30); }
+.badge-blue    { background: rgba(59,130,246,0.12); color: #93c5fd;
+                  border: 1px solid rgba(59,130,246,0.30); }
+
+/* En light mode, les badges restent lisibles */
+.light .badge-violet { background: rgba(124,58,237,0.10); color: #6d28d9; }
+.light .badge-green  { background: rgba(34,197,94,0.08);  color: #15803d; }
+.light .badge-amber  { background: rgba(245,158,11,0.10); color: #92400e; }
+.light .badge-red    { background: rgba(239,68,68,0.10);  color: #991b1b; }
+
+Utilisation des badges :
+  FREE plan   → badge-violet
+  PRO plan    → badge-green
+  ENTERPRISE  → badge-amber
+  Succès      → badge-green
+  En attente  → badge-amber
+  Erreur      → badge-red
+  IA          → badge-violet
+  Nouveau     → badge-blue
+
+Remplace tous les badges incohérents dans les templates.
+```
+
+---
+
+### PROMPT 5.4 — Formulaires et validation visuelle
+
+```
+Lis tous les formulaires dans src/app/features/auth/ et settings/.
+
+OBJECTIF : chaque champ de formulaire doit avoir des états visuels clairs.
+
+1. Floating labels (si pas encore présents) :
+   Le label monte au-dessus du champ quand il a le focus ou une valeur.
+   
+   Pattern Angular standalone :
+   <div class="relative">
+     <input
+       class="input-base pt-5 pb-2 w-full peer"
+       [class.border-red-500]="control.invalid && control.touched"
+       [class.border-green-500]="control.valid && control.touched"
+       placeholder=" " />
+     <label class="absolute left-4 top-3.5 text-[var(--text-muted)] text-sm
+                   transition-all peer-focus:top-1.5 peer-focus:text-xs
+                   peer-focus:text-[var(--color-primary-light)]
+                   peer-[:not(:placeholder-shown)]:top-1.5
+                   peer-[:not(:placeholder-shown)]:text-xs">
+       Email
+     </label>
+   </div>
+
+2. Messages d'erreur inline :
+   @if (control.invalid && control.touched) {
+     <p class="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+       <lucide-icon name="alert-circle" [size]="12" />
+       {{ getErrorMessage(control) }}
+     </p>
+   }
+
+3. Animation shake sur erreur de soumission :
+   Dans styles.css :
+   @keyframes shake {
+     0%, 100% { transform: translateX(0); }
+     20%, 60% { transform: translateX(-6px); }
+     40%, 80% { transform: translateX(6px); }
+   }
+   .shake { animation: shake 0.4s ease; }
+   
+   Dans le composant : ajouter/retirer la classe 'shake' sur submit invalide.
+
+4. Indicateur de force du mot de passe (uniquement sur /register) :
+   4 segments colorés qui se remplissent selon la complexité :
+   - 1 segment rouge : trop court
+   - 2 segments orange : moyen
+   - 3 segments jaune : bien
+   - 4 segments vert : fort
+
+Implémente ces améliorations sur tous les formulaires existants.
+Ne change pas la logique de validation — seulement le rendu visuel.
+```
+
+---
+
+### PROMPT 5.5 — Accessibilité (a11y) =============================================================== A commencer à partir d'ici
+
+```
+Lis tous les templates HTML de l'application.
+
+Applique ces corrections d'accessibilité sans changer l'apparence :
+
+1. ARIA-LABEL sur tous les boutons icon-only :
+   Cherche tous les <button> et <a> qui contiennent uniquement
+   une icône lucide sans texte → ajoute [attr.aria-label]="'...'"
+
+2. FOCUS VISIBLE :
+   Dans styles.css, assure que le focus clavier est visible :
+   :focus-visible {
+     outline: 2px solid var(--color-primary);
+     outline-offset: 2px;
+     border-radius: 6px;
+   }
+   :focus:not(:focus-visible) { outline: none; }
+
+3. CONTRASTE TEXTE :
+   Vérifie que text-[var(--text-muted)] sur fond var(--bg-card)
+   a un ratio > 4.5:1 dans les deux thèmes.
+   Si non : ajuste la valeur de --text-muted dans .light et :root.
+
+4. SKIP LINK :
+   Dans src/index.html, tout en haut du body :
+   <a href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
+             focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg
+             focus:bg-[var(--color-primary)] focus:text-white">
+     Aller au contenu principal
+   </a>
+   
+   Ajoute id="main-content" sur le <main> dans app-shell.
+
+5. ROLES ARIA sur les sections dynamiques :
+   <div role="status" aria-live="polite"> sur les zones de résultat IA
+   (résumé, Q&A) pour notifier les lecteurs d'écran.
+
+Ne modifie aucune logique — uniquement les templates et styles.
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 6 — ÉLÉMENTS MANQUANTS
+## ════════════════════════════════════════════════════════
+
+### PROMPT 6.1 — Page 404, Forbidden et maintenance
+
+```
+Lis src/app/shared/pages/ pour voir ce qui existe (not-found, forbidden).
+
+Crée ou améliore ces pages avec le design Kovixel premium :
+
+A) not-found.component (404) :
+   - Fond : mesh-bg (variable CSS)
+   - Grand "404" en text-gradient-violet (très grand, 120px, font-display)
+   - Titre : "Page introuvable"
+   - Sous-titre : "Cette page n'existe pas ou a été déplacée."
+   - Bouton : [← Retour à l'accueil] → routerLink="/"
+   - Animation : le "404" pulse doucement (animation CSS)
+
+B) forbidden.component (403) :
+   - Icône lucide "shield-x" dans un carré rouge/10
+   - Titre : "Accès refusé"
+   - Sous-titre : "Vous n'avez pas les droits pour accéder à cette page."
+   - Bouton PRO si c'est une page payante : [Passer en PRO →]
+   - Bouton secondaire : [← Dashboard]
+
+C) Crée error.component (500) :
+   - Icône lucide "server-crash" dans un carré amber/10
+   - Titre : "Erreur serveur"
+   - Sous-titre : "Un problème technique est survenu. Réessayez dans quelques instants."
+   - Bouton : [Réessayer] + [Contacter le support]
+
+Les trois pages doivent fonctionner en dark ET light mode
+(elles utilisent les variables CSS, donc c'est automatique).
+```
+
+---
+
+### PROMPT 6.2 — Toasts et notifications cohérentes
+
+```
+Lis src/app/core/interceptors/error.interceptor.ts
+et cherche tous les appels à ngx-toastr dans le projet.
+
+1. CONFIGURATION GLOBALE ngx-toastr dans app.config.ts (ou AppModule) :
+   Vérifie que la config toastr est appliquée, sinon ajoute :
+   
+   provideToastr({
+     timeOut: 4000,
+     positionClass: 'toast-bottom-right',
+     preventDuplicates: true,
+     progressBar: true,
+     closeButton: true,
+     enableHtml: false,
+     tapToDismiss: true,
+   })
+
+2. STYLES PERSONNALISÉS dans styles.css :
+   Override ngx-toastr pour coller au design Kovixel :
+   
+   .toast-container .ngx-toastr {
+     background: var(--bg-card) !important;
+     border: 1px solid var(--border) !important;
+     border-radius: 12px !important;
+     box-shadow: var(--shadow-card) !important;
+     color: var(--text-primary) !important;
+     font-size: 14px !important;
+   }
+   .toast-success { border-left: 3px solid var(--color-success) !important; }
+   .toast-error   { border-left: 3px solid var(--color-error) !important; }
+   .toast-warning { border-left: 3px solid var(--color-warning) !important; }
+   .toast-info    { border-left: 3px solid var(--color-primary) !important; }
+   
+   /* Barre de progression */
+   .toast-progress {
+     background: var(--color-primary) !important;
+     opacity: 0.4 !important;
+   }
+
+3. MESSAGES STANDARDISÉS :
+   Crée src/app/core/services/notification.service.ts
+   
+   @Injectable({ providedIn: 'root' })
+   export class NotificationService {
+     private toastr = inject(ToastrService);
+     
+     success(msg: string, title = 'Succès') {
+       this.toastr.success(msg, title);
+     }
+     error(msg: string, title = 'Erreur') {
+       this.toastr.error(msg, title);
+     }
+     warning(msg: string, title = 'Attention') {
+       this.toastr.warning(msg, title);
+     }
+     info(msg: string, title = 'Info') {
+       this.toastr.info(msg, title);
+     }
+     // Messages prédéfinis métier Kovixel
+     uploadSuccess()    { this.success('Fichier uploadé avec succès'); }
+     convertSuccess()   { this.success('Conversion terminée — prête à télécharger'); }
+     summaryReady()     { this.success('Résumé généré par l\'IA'); }
+     quotaWarning(n: number) {
+       this.warning(`Il vous reste ${n} conversion(s) aujourd'hui`);
+     }
+     quotaExceeded()    { this.error('Limite journalière atteinte', 'Quota dépassé'); }
+     serverError()      { this.error('Erreur serveur — réessayez', 'Problème technique'); }
+   }
+   
+   Remplace tous les appels directs à ToastrService dans le projet
+   par NotificationService pour uniformiser les messages.
+```
+
+---
+
+### PROMPT 6.3 — Sidebar : sections manquantes et polish
+
+```
+Lis src/app/core/layouts/app-shell/ en entier.
+
+Audite et complète le sidebar avec ces éléments s'ils manquent :
+
+1. QUOTA MINI-BARRE (pour utilisateurs FREE) :
+   En bas du sidebar, au-dessus du profil :
+   @if (authService.userPlan() === 'FREE') {
+     <div class="px-3 pb-3">
+       <div class="rounded-xl p-3 bg-[var(--color-primary-subtle)]
+                   border border-[var(--border)]">
+         <div class="flex justify-between text-xs mb-2">
+           <span class="text-[var(--text-muted)]">Conversions</span>
+           <span class="text-[var(--text-secondary)] font-mono">
+             {{ quotaUsed }}/5
+           </span>
+         </div>
+         <div class="h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+           <div class="h-full rounded-full bg-[var(--color-primary)]
+                       transition-all duration-500"
+                [style.width.%]="(quotaUsed / 5) * 100">
+           </div>
+         </div>
+         <a routerLink="/subscription"
+            class="mt-2 text-[10px] text-[var(--color-primary-light)]
+                   hover:underline block">
+           Passer en PRO →
+         </a>
+       </div>
+     </div>
+   }
+
+2. SECTION NAVIGATION COMPLÈTE :
+   Vérifie que tous ces liens existent dans le sidebar :
+   - Dashboard (lucide: layout-dashboard)
+   - Documents (lucide: file-text)
+   - Résumé IA (lucide: sparkles) + badge "IA"
+   - Q&A (lucide: message-square) + badge "IA"
+   - Extraction (lucide: database) + badge "IA"
+   - Conversion (lucide: arrow-right-left)
+   - Jobs (lucide: clock) + badge nombre de jobs en cours si > 0
+   - Séparateur
+   - Abonnement (lucide: zap)
+   - Paramètres (lucide: settings)
+
+3. INDICATEUR ACTIF ANIMÉ :
+   L'item actif dans le sidebar doit avoir un indicateur
+   (barre verticale à gauche ou background coloré).
+   Utilise [routerLinkActive]="'active'" sur chaque item
+   et la classe .sidebar-item.active dans styles.css :
+   
+   .sidebar-item.active {
+     background: var(--color-primary-subtle);
+     color: var(--color-primary-light);
+     border-color: var(--border-hover);
+   }
+   .sidebar-item.active::before {
+     content: '';
+     position: absolute;
+     left: 0;
+     top: 20%;
+     height: 60%;
+     width: 3px;
+     background: var(--color-primary);
+     border-radius: 0 3px 3px 0;
+   }
+   (ajouter position: relative sur .sidebar-item)
+
+4. RESPONSIVE SIDEBAR :
+   Sur mobile (< 768px) : sidebar caché par défaut, ouvert via hamburger
+   Si un HamburgerButton n'existe pas dans la topbar → ajoute-le
+   Overlay semi-transparent derrière le sidebar mobile
+   Fermeture au clic sur un lien ou l'overlay
+```
+
+---
+
+## ════════════════════════════════════════════════════════
+## PHASE 7 — VÉRIFICATION FINALE
+## ════════════════════════════════════════════════════════
+
+### PROMPT 7.1 — Vérification complète du dual-theme
+
+```
+Lance npm start pour démarrer l'application.
+
+Effectue cette checklist de vérification et rapporte les résultats :
+
+DARK THEME (classe .dark sur <html>) :
+□ / (landing)           → fond sombre, textes clairs, violet
+□ /auth/login           → fond mesh violet sombre, carte sombre
+□ /auth/register        → idem
+□ /dashboard            → fond sombre (PLUS de blanc) ← vérification critique
+□ /documents            → fond sombre, cards sombres
+□ /documents/:id        → fond sombre
+□ /summary              → fond sombre
+□ /qna                  → fond sombre
+□ /extraction           → fond sombre
+□ /conversion           → fond sombre
+□ /settings             → fond sombre, radio "Sombre" sélectionné
+□ Sidebar               → fond sombre, items corrects
+□ Topbar                → glassmorphism sombre
+
+LIGHT THEME (classe .light sur <html>) :
+□ / (landing)           → fond ivoire violet doux
+□ /auth/login           → fond clair avec gradient violet
+□ /dashboard            → fond ivoire, cards blanches, textes sombres
+□ /documents            → fond clair, cards blanches
+□ /settings             → fond clair, radio "Clair" sélectionné
+□ Sidebar               → fond ivoire, textes sombres
+□ Toasts                → fond card clair, textes sombres lisibles
+□ Badges                → couleurs ajustées pour le clair (contraste ok)
+
+TOGGLE :
+□ Bouton dans la topbar → bascule instantanément
+□ Transition 0.3s fluide (pas de flash)
+□ Préférence persistée en localStorage après refresh
+□ Icône soleil en dark, icône lune en light
+
+Pour chaque case qui échoue, donne le fichier et la ligne à corriger.
+```
+
+---
+
+### PROMPT 7.2 — Nettoyage final
+
+```
+Lis tous les fichiers de src/app/.
+
+Après toutes les modifications précédentes, effectue ce nettoyage :
+
+1. SUPPRIMER les couleurs hardcodées résiduelles :
+   Grep dans tous les fichiers HTML :
+   - bg-white    → remplacer si encore présent
+   - bg-gray-    → remplacer si encore présent
+   - text-gray-  → remplacer si encore présent
+   - text-black  → remplacer si encore présent
+   Liste toutes les occurrences restantes et corrige-les.
+
+2. SUPPRIMER le code mort :
+   - Commentaires TODO/FIXME anciens
+   - Imports inutilisés dans les composants modifiés
+   - Variables de classe non utilisées
+
+3. VÉRIFIER la compilation :
+   Lance : npx ng build --configuration=development
+   Corrige tous les erreurs TypeScript et les warnings critiques.
+   (Ne corrige pas les warnings de dépréciation mineurs)
+
+4. VÉRIFIER SSR :
+   Lance : npm run build:ssr
+   S'assure qu'il n'y a pas d'accès à window/document/localStorage
+   en dehors des guards isPlatformBrowser()
+   (ThemeService le fait déjà — vérifie qu'aucun autre service ne l'enfreint)
+
+5. RAPPORT FINAL :
+   Liste les 5 fichiers les plus modifiés.
+   Résume les changements principaux.
+   Donne les commandes de test à lancer.
+```
+
+---
+
+## ═══════════════════════════════════════
+## RÉCAPITULATIF & ORDRE D'EXÉCUTION
+## ═══════════════════════════════════════
+
+```
+JOUR 1 — Fondations
+  → 1.1  Audit complet (lecture seule)
+  → 2.1  Design tokens dual-theme dans styles.css
+  → 2.2  ThemeService + script anti-FOUC
+  → 2.3  Toggle dans la topbar
+
+JOUR 2 — Fix dark theme
+  → 3.1  Fix dashboard (urgence)
+  → 3.2  Uniformisation toutes les features
+  → 3.3  Fix auth-layout dual-theme
+
+JOUR 3 — Thème clair
+  → 4.1  App-shell adapté dual-theme
+  → 4.2  Radio button settings
+
+JOUR 4 — Audit UI/UX
+  → 5.1  États loading/empty/error
+  → 5.2  Typographie et spacing
+  → 5.3  Badges uniformes
+  → 5.4  Formulaires et validation
+
+JOUR 5 — Polish
+  → 5.5  Accessibilité
+  → 6.1  Pages 404/403/500
+  → 6.2  Toasts uniformes
+  → 6.3  Sidebar complet
+  → 7.1  Vérification finale
+  → 7.2  Nettoyage
+```
+
+---
+
+## ═══════════════════════════════════════
+## ÉVALUATION : FAUT-IL LE THÈME CLAIR ?
+## ═══════════════════════════════════════
+
+```
+OUI, et voici pourquoi c'est pertinent pour Kovixel :
+
+✅ Différenciation produit
+   La plupart des outils PDF (ILovePDF, Smallpdf, Adobe) sont
+   entièrement clairs. Un toggle premium vous distingue.
+
+✅ Accessibilité & usage en plein jour
+   Le dark theme fatigue certains yeux sous forte lumière.
+   Le light mode capture des utilisateurs qui auraient abandonné.
+
+✅ Coût de développement faible
+   Avec Tailwind + CSS variables, c'est ~1 jour de travail.
+   La fondation (variables CSS) bénéficie à toute l'app.
+
+✅ Premium perçu
+   Un toggle de thème = feature qu'on associe aux produits matures
+   (VS Code, Linear, Notion, GitHub). Augmente la confiance.
+
+⚠️ Condition : le light theme doit être PREMIUM
+   Pas du blanc banal → violet doux sur ivoire, ombres colorées.
+   Les tokens définis dans ce plan garantissent cet effet.
+
+VERDICT : Implémentez-le. Le ROI est élevé pour un coût faible.
+```
+
+---
+
+*Kovixel UI — Audit & Thème Premium · Angular 21 · Signals · Tailwind v3*
+*Fichier de prompts v1.0 — Mai 2026*
