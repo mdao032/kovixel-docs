@@ -49,10 +49,11 @@ fi
 echo "==> Écriture du Caddyfile pour ${DOMAIN}"
 cat > /etc/caddy/Caddyfile <<EOF
 ${DOMAIN} {
-	# kovixel-ui publie déjà le port 80 sur l'hôte (docker-compose.yml) —
-	# Caddy termine le TLS et proxy tout le reste tel quel (headers, websockets
-	# éventuels, gros uploads inclus grâce au streaming natif de reverse_proxy).
-	reverse_proxy localhost:80
+	# kovixel-ui est lié à 127.0.0.1:8080 (docker-compose.yml) pour laisser Caddy
+	# seul sur 80/443 — Caddy termine le TLS et proxy tout le reste tel quel
+	# (headers, websockets éventuels, gros uploads inclus grâce au streaming
+	# natif de reverse_proxy).
+	reverse_proxy localhost:8080
 
 	encode gzip
 
