@@ -66,7 +66,13 @@ set_env MINIO_ROOT_PASSWORD              "$(gen_hex32)"
 set_env GRAFANA_PASSWORD                 "$(gen_b64_24)"
 set_env BACKUP_ENCRYPTION_KEY             "$(gen_b64_32)"
 set_env PDF_ESIGNATURE_CERT_ENCRYPTION_KEY "$(gen_b64_32)"
-set_env ORIGIN_AUTH_SECRET                "$(gen_hex32)"
+# ORIGIN_AUTH_SECRET délibérément PAS généré ici, contrairement aux autres secrets :
+# nginx.conf.template exige l'en-tête X-Origin-Auth sur TOUTE requête dès que cette
+# variable est non vide, indépendamment d'ORIGIN_LOCKDOWN_ENABLED — un site tout juste
+# déployé (staging, sans Cloudflare devant) se retrouve alors à renvoyer 403 sur tout,
+# sans lien évident avec ce script. À ne renseigner qu'en suivant
+# kovixel-ui/docker/CLOUDFLARE_RUNBOOK.md (la Transform Rule Cloudflare doit poser le
+# même secret AVANT que cette variable ne soit remplie côté serveur).
 
 if [[ -n "$DOMAIN" ]]; then
   echo "==> Application du domaine '${DOMAIN}' (CORS, mail, MinIO endpoint interne)"
