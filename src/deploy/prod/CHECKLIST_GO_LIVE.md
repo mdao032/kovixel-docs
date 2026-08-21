@@ -18,8 +18,22 @@
 
 ## Réseau / TLS
 
-- [ ] DNS de prod pointe vers le bon VPS (`dig app.kovixel.com` ou équivalent).
-- [ ] HTTPS fonctionnel (`curl -I https://app.kovixel.com/api/v1/health` → 200).
+- [ ] DNS de prod pointe vers le bon VPS — vérifié en comparant `curl -s https://ifconfig.me`
+      **sur le VPS** avec `nslookup <domaine-prod> 8.8.8.8` **depuis ta machine**
+      (pas seulement `dig` local, qui peut mentir sur un DNS mal propagé/en cache —
+      confusion réelle qui a fait perdre ~1h à un faux diagnostic de firewall
+      hébergeur en staging, voir `../TROUBLESHOOTING.md` #8).
+- [ ] HTTPS fonctionnel, **sans boucle de redirection**
+      (`curl -IL https://app.kovixel.com/api/v1/health` → un seul saut puis `200`,
+      pas une série de `308` vers la même URL — voir `../TROUBLESHOOTING.md` #4).
+- [ ] Au moins une ressource statique (JS/CSS) référencée par la page d'accueil
+      charge réellement en `200`, pas seulement la page HTML elle-même — voir
+      `../TROUBLESHOOTING.md` #7. Automatisé par
+      `bash ../scripts/health-check.sh https://app.kovixel.com`.
+- [ ] Aucun en-tête de sécurité HTTP dupliqué sur `/api/*`
+      (`curl -I https://app.kovixel.com/api/v1/health` — un seul
+      `X-Frame-Options`, un seul `Content-Security-Policy`, etc. — voir
+      `../TROUBLESHOOTING.md` #6).
 - [ ] `KOVIXEL_COOKIE_SECURE=true` (sinon aucune session ne persiste en HTTPS).
 - [ ] `CORS_ALLOWED_ORIGINS` = domaine de prod exact (pas celui du staging).
 - [ ] Si Cloudflare : verrou d'origine actif ET vérifié (`CLOUDFLARE_RUNBOOK.md`

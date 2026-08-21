@@ -17,6 +17,25 @@
 
 Tous les scripts référencés ci-dessous sont dans [../scripts/](../scripts/).
 
+> ⚠️ **Clone `kovixel-docs` sur le VPS plutôt que de copier les scripts un par un.**
+> Un `scp` ponctuel se fige au moment de la copie — un correctif poussé plus tard
+> sur `kovixel-docs` n'a alors aucun effet lors d'une réexécution du script sur le
+> VPS (bug réel rencontré, voir [../TROUBLESHOOTING.md #5](../TROUBLESHOOTING.md#5-scripts-de-déploiement-non-synchronisés-avec-git)).
+> ```bash
+> git clone <url-git-kovixel-docs> ~/kovixel-app/kovixel-docs
+> ```
+> Puis, avant **chaque** exécution d'un script ci-dessous :
+> ```bash
+> cd ~/kovixel-app/kovixel-docs && git pull --ff-only
+> ```
+> et remplacer les commandes `scp ../scripts/...` ci-dessous par un appel direct
+> depuis `~/kovixel-app/kovixel-docs/src/deploy/scripts/`.
+>
+> 📖 Si un problème pendant le déploiement ressemble à quelque chose de déjà vu
+> (nginx qui refuse de démarrer, boucle de redirection HTTPS, assets 404, port déjà
+> utilisé, DNS...), consulte d'abord [../TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
+> — probablement plus rapide qu'un nouveau diagnostic complet.
+
 ## 1. Durcissement initial du serveur
 
 Depuis ta machine, copie le script puis exécute-le sur le serveur (en root) :
@@ -83,9 +102,32 @@ Prometheus, Grafana), et attend que les healthchecks passent.
 
 ## 6. TLS
 
+> ⚠️ **Vérifie d'abord que le DNS pointe vraiment vers ce serveur — avant toute
+> autre hypothèse.** Une IP mal notée/mal communiquée lors de la récupération
+> auprès de l'hébergeur ressemble à s'y méprendre à un blocage réseau complexe
+> (voir [../TROUBLESHOOTING.md #8](../TROUBLESHOOTING.md#8-fausse-piste--blocage-réseau-hébergeur),
+> ~1h de diagnostic perdue sur cette confusion lors du premier déploiement) :
+> ```bash
+> # Sur le VPS, source de vérité absolue pour sa propre IP publique :
+> curl -s https://ifconfig.me
+> # Depuis ta machine, ce que le monde voit réellement (bypass le cache résolveur local) :
+> nslookup staging.kovixel.com 8.8.8.8
+> ```
+> Les deux doivent être identiques avant de continuer. Si ce n'est pas le cas,
+> corrige l'enregistrement `A` chez ton registrar et attends la propagation
+> (quelques minutes à ~30 min) avant de relancer le script ci-dessous.
+
 ```bash
 scp ../scripts/05-setup-tls-caddy.sh deploy@<ip-vps>:~/kovixel-app/
 ssh deploy@<ip-vps> 'sudo bash ~/kovixel-app/05-setup-tls-caddy.sh staging.kovixel.com'
+```
+
+Vérification post-exécution recommandée (les deux bugs ci-dessous ont été réels au
+premier déploiement, tous deux corrigés dans le code mais à re-vérifier si le
+Caddyfile ou `nginx.conf.template` sont modifiés à l'avenir) :
+```bash
+curl -IL https://staging.kovixel.com/api/v1/health   # doit renvoyer 200, PAS une boucle de 308
+bash ~/kovixel-app/kovixel-docs/src/deploy/scripts/health-check.sh https://staging.kovixel.com
 ```
 
 Caddy obtient et renouvelle automatiquement un certificat Let's Encrypt, et

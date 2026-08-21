@@ -21,6 +21,18 @@ domaine et le VPS de prod. `SPRING_PROFILES_ACTIVE=prod` est le même profil
 qu'en staging — c'est un principe fondateur de ce dossier de déploiement (voir
 [../README.md](../README.md)).
 
+> ✅ Tous les bugs de configuration (nginx, Caddy, en-têtes dupliqués, dépendance
+> circulaire Spring...) rencontrés lors du premier déploiement staging sont déjà
+> corrigés dans le code — voir [../TROUBLESHOOTING.md](../TROUBLESHOOTING.md) pour
+> le détail. Le staging existe précisément pour absorber cette classe de bug avant
+> la prod ; s'ils réapparaissent en prod alors qu'ils ont été vus et corrigés en
+> staging, c'est probablement un déploiement depuis un commit/tag antérieur au fix
+> — vérifier `git log` sur `kovixel` et `kovixel-ui` avant de re-diagnostiquer
+> depuis zéro. Vérification rapide en un coup d'œil, avant toute bascule DNS finale :
+> ```bash
+> bash ~/kovixel-app/kovixel-docs/src/deploy/scripts/health-check.sh https://<domaine-prod>
+> ```
+
 ## Ce qui diffère réellement
 
 ### 1. Cloudflare en frontal (recommandé, pas obligatoire en staging)

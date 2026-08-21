@@ -31,6 +31,7 @@ d'utile. Seuls diffèrent le domaine, les credentials, et quelques garde-fous
 ```
 deploy/
 ├── README.md                 — ce fichier
+├── TROUBLESHOOTING.md         — bugs réels rencontrés en déploiement, cause + fix
 ├── ENV_VARIABLES.md           — référence complète des variables d'environnement
 ├── dev/README.md              — guide développeur (natif + docker-compose.infra.yml)
 ├── staging/README.md          — guide staging pas à pas (VPS Contabo ou équivalent)
@@ -42,8 +43,15 @@ deploy/
     ├── 03-generate-secrets.sh     — génère un .env avec des secrets forts
     ├── 04-deploy.sh                — clone/pull + build + up + healthcheck
     ├── 05-setup-tls-caddy.sh       — TLS automatique (Let's Encrypt via Caddy)
-    └── health-check.sh             — vérification post-déploiement
+    └── health-check.sh             — vérification post-déploiement (HTTP + assets + redirections)
 ```
+
+> 📖 **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** recense, avec cause racine et
+> correctif, tous les bugs réels rencontrés lors du premier déploiement staging
+> (nginx, Caddy, DNS, en-têtes de sécurité, dépendances circulaires Spring...).
+> Tous sont déjà corrigés dans le code à ce jour — ce document sert de référence
+> rapide si un symptôme similaire réapparaît, et de check-list de non-régression
+> avant la bascule prod.
 
 ## Principes qui traversent tous les environnements
 
